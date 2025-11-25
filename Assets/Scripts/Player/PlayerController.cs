@@ -20,7 +20,6 @@ public class PlayerController : MonoBehaviour
     public Vector3 Velocity => rb.linearVelocity;
     public float JumpForce => jumpForce;
 
-
     public event System.Action<PlayerState> OnStateChanged;
 
     void Awake()
@@ -28,6 +27,7 @@ public class PlayerController : MonoBehaviour
         InitializeRigidbody();
         InitializeInput();
     }
+
     void FixedUpdate()
     {
         BroadcastState();
@@ -45,6 +45,7 @@ public class PlayerController : MonoBehaviour
 
         OnStateChanged?.Invoke(state);
     }
+
     void OnEnable()
     {
         inputActions?.Enable();
@@ -65,10 +66,6 @@ public class PlayerController : MonoBehaviour
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         }
-        else
-        {
-            Debug.LogError($"{gameObject.name}: Rigidbody component is missing!");
-        }
     }
 
     void InitializeInput()
@@ -79,6 +76,9 @@ public class PlayerController : MonoBehaviour
 
     void OnJumpPerformed(InputAction.CallbackContext context)
     {
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+            return;
+
         if (isGrounded && canJump)
         {
             Jump();

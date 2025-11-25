@@ -1,20 +1,54 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Obstacle : MonoBehaviour
 {
-    [Header("Settings")]
-    [SerializeField] private bool destroyOnHit = false;
+    [Header("Dissolve Settings")]
+    [SerializeField] private float dissolveDuration = 1f;
+
+    private Material mat;
+    private bool hasBeenHit = false;
+
+    private string dissolveProperty = "_Value";
+
+    void OnEnable()
+    {
+        if (mat == null)
+            mat = GetComponent<MeshRenderer>().material;
+
+        if (mat.HasProperty(dissolveProperty))
+            mat.SetFloat(dissolveProperty, 0f);
+
+        hasBeenHit = false;
+    }
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Player"))
-        {
-            Debug.Log("Player hit obstacle!");
+        if (hasBeenHit)
+            return;
 
-            if (destroyOnHit)
-            {
-                Destroy(gameObject);
-            }
+        if (!other.CompareTag("Player"))
+            return;
+
+        hasBeenHit = true;
+
+        GameManager.Instance.PlayerHitObstacle();
+
+        StartCoroutine(DissolveEffect());
+    }
+
+    System.Collections.IEnumerator DissolveEffect()
+    {
+        float t = 0f;
+
+        while (t < dissolveDuration)
+        {
+            float v = t / dissolveDuration;
+            mat.SetFloat(dissolveProperty, v);
+            t += Time.deltaTime;
+            yield return null;
         }
+
+        mat.SetFloat(dissolveProperty, 1f);
+        gameObject.SetActive(false);
     }
 }

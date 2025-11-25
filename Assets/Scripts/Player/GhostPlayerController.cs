@@ -21,23 +21,7 @@ public class GhostPlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.isKinematic = true;
         stateBuffer = new StateBuffer<PlayerState>(bufferCapacity);
-
-        SetupGhostVisuals();
     }
-
-    void SetupGhostVisuals()
-    {
-        MeshRenderer renderer = GetComponent<MeshRenderer>();
-        if (renderer != null)
-        {
-            Material ghostMat = new Material(renderer.material);
-            Color color = ghostMat.color;
-            color.a = ghostAlpha;
-            ghostMat.color = color;
-            renderer.material = ghostMat;
-        }
-    }
-
     public void ReceiveState(PlayerState state)
     {
         stateBuffer.Add(state);

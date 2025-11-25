@@ -2,9 +2,16 @@ using UnityEngine;
 
 public class Collectible : MonoBehaviour
 {
-    [Header("Settings")]
+    [Header("Collectible Settings")]
     [SerializeField] private int scoreValue = 10;
     [SerializeField] private float rotationSpeed = 100f;
+
+    private bool hasBeenCollected = false;
+
+    void OnEnable()
+    {
+        hasBeenCollected = false;
+    }
 
     void Update()
     {
@@ -13,10 +20,16 @@ public class Collectible : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            Debug.Log($"Collected! +{scoreValue} points");
-            Destroy(gameObject);
-        }
+        if (hasBeenCollected)
+            return;
+
+        if (!other.CompareTag("Player"))
+            return;
+
+        hasBeenCollected = true;
+
+        GameManager.Instance.AddScore(scoreValue);
+
+        gameObject.SetActive(false);
     }
 }

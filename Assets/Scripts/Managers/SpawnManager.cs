@@ -11,16 +11,12 @@ public class SpawnManager : MonoBehaviour
 
     [Header("Spawn Settings")]
     [SerializeField] private int initialTileCount = 3;
-
-    [Header("Organization")]
-    [SerializeField] private bool organizeTilesInHierarchy = true;
-    [SerializeField] private string tilesContainerName = "Tiles";
+    [SerializeField] private int poolSizePerTile = 5;
 
     [Header("Debug")]
     [SerializeField] private bool showDebugInfo = false;
 
     private Transform lastTileSpawnPos;
-    private Transform tilesContainer;
     private int totalTilesSpawned;
 
     public int TotalTilesSpawned => totalTilesSpawned;
@@ -33,26 +29,48 @@ public class SpawnManager : MonoBehaviour
             return;
         }
 
-        InitializeSpawner();
+        InitializePools();
         SpawnInitialTiles();
+    }
+
+    void InitializePools()
+    {
+        if (PoolManager.Instance == null)
+        {
+            enabled = false;
+            return;
+        }
+
+        CreatePoolsForTiles(easyTiles, "Easy");
+        CreatePoolsForTiles(mediumTiles, "Medium");
+        CreatePoolsForTiles(hardTiles, "Hard");
+
+        totalTilesSpawned = 0;
+    }
+
+    void CreatePoolsForTiles(GameObject[] tiles, string difficulty)
+    {
+        if (tiles == null || tiles.Length == 0) return;
+
+        for (int i = 0; i < tiles.Length; i++)
+        {
+            if (tiles[i] == null) continue;
+
+            string poolKey = GetPoolKey(tiles[i].name, difficulty);
+            PoolManager.Instance.CreatePool(poolKey, tiles[i], poolSizePerTile);
+        }
+    }
+
+    string GetPoolKey(string tileName, string difficulty)
+    {
+        return $"{difficulty}_{tileName}";
     }
 
     bool ValidateSetup()
     {
         if (easyTiles == null || easyTiles.Length == 0)
         {
-            Debug.LogError($"{gameObject.name}: No easy tile prefabs assigned!");
             return false;
-        }
-
-        if (mediumTiles == null || mediumTiles.Length == 0)
-        {
-            Debug.LogWarning($"{gameObject.name}: No medium tile prefabs assigned! Will use easy tiles.");
-        }
-
-        if (hardTiles == null || hardTiles.Length == 0)
-        {
-            Debug.LogWarning($"{gameObject.name}: No hard tile prefabs assigned! Will use medium tiles.");
         }
 
         GameObject[] allTiles = GetAllTilePrefabs();
@@ -63,7 +81,6 @@ public class SpawnManager : MonoBehaviour
             GroundTile tileComponent = prefab.GetComponent<GroundTile>();
             if (tileComponent == null)
             {
-                Debug.LogError($"{gameObject.name}: Tile Prefab '{prefab.name}' must have a GroundTile component!");
                 return false;
             }
 
@@ -88,19 +105,6 @@ public class SpawnManager : MonoBehaviour
         return allTiles.ToArray();
     }
 
-    void InitializeSpawner()
-    {
-        if (organizeTilesInHierarchy)
-        {
-            GameObject container = new GameObject(tilesContainerName);
-            tilesContainer = container.transform;
-            tilesContainer.SetParent(transform);
-            tilesContainer.localPosition = Vector3.zero;
-        }
-
-        totalTilesSpawned = 0;
-    }
-
     void SpawnInitialTiles()
     {
         GameObject firstTile = SpawnTileAt(Vector3.zero);
@@ -115,17 +119,12 @@ public class SpawnManager : MonoBehaviour
                 SpawnNextTile();
             }
         }
-        else
-        {
-            Debug.LogError($"{gameObject.name}: Failed to spawn first tile!");
-        }
     }
 
     public void SpawnNextTile()
     {
         if (lastTileSpawnPos == null)
         {
-            Debug.LogWarning($"{gameObject.name}: Cannot spawn tile - lastTileSpawnPos is null!");
             return;
         }
 
@@ -144,14 +143,21 @@ public class SpawnManager : MonoBehaviour
     GameObject SpawnTileAt(Vector3 position)
     {
         GameObject selectedPrefab = GetRandomTilePrefab();
+        string difficulty = GetCurrentDifficulty();
+        string poolKey = GetPoolKey(selectedPrefab.name, difficulty);
 
-        GameObject tile = Instantiate(selectedPrefab, position, Quaternion.identity, tilesContainer);
-        tile.name = $"{selectedPrefab.name}_{totalTilesSpawned:D3}";
+        GameObject tile = PoolManager.Instance.SpawnFromPool(poolKey, position, Quaternion.identity);
+
+        if (tile == null)
+        {
+            return null;
+        }
+
         totalTilesSpawned++;
 
         if (showDebugInfo)
         {
-            Debug.Log($"[SpawnManager] Spawned {selectedPrefab.name} | Difficulty: {GetCurrentDifficulty()} | Speed: {GetCurrentSpeed():F2} m/s");
+            Debug.Log($"[SpawnManager] Spawned {tile.name} from pool '{poolKey}' | Difficulty: {difficulty} | Speed: {GetCurrentSpeed():F2} m/s");
         }
 
         return tile;
@@ -208,38 +214,16 @@ public class SpawnManager : MonoBehaviour
         return "Hard";
     }
 
-    public void ClearAllTiles()
-    {
-        if (tilesContainer != null)
-        {
-            foreach (Transform child in tilesContainer)
-            {
-                Destroy(child.gameObject);
-            }
-        }
-
-        totalTilesSpawned = 0;
-        lastTileSpawnPos = null;
-    }
-
-    public void ResetSpawner()
-    {
-        ClearAllTiles();
-        SpawnInitialTiles();
-    }
-
     void OnValidate()
     {
         if (initialTileCount < 1)
         {
             initialTileCount = 1;
-            Debug.LogWarning("Initial tile count must be at least 1.");
         }
 
         if (hardSpeedThreshold <= mediumSpeedThreshold)
         {
             hardSpeedThreshold = mediumSpeedThreshold + 1f;
-            Debug.LogWarning("Hard speed threshold must be greater than medium speed threshold.");
         }
     }
 }

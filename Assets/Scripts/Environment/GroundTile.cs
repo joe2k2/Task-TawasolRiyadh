@@ -8,6 +8,11 @@ public class GroundTile : MonoBehaviour
     [Header("Destruction Settings")]
     [SerializeField] private float destroyDelay = 1f;
 
+    [Header("Pooling Settings")]
+    [SerializeField] private bool usePooling = true;
+
+    private string poolKey;
+
     private SpawnManager spawnManager;
     private bool hasTriggeredSpawn;
     private float currentSpeed;
@@ -20,25 +25,22 @@ public class GroundTile : MonoBehaviour
         Initialize();
     }
 
+    void OnEnable()
+    {
+        hasTriggeredSpawn = false;
+    }
+
     void Update()
     {
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+            return;
+
         UpdateMovement();
     }
 
     void Initialize()
     {
         spawnManager = FindFirstObjectByType<SpawnManager>();
-
-        if (spawnManager == null)
-        {
-            Debug.LogError($"{gameObject.name}: SpawnManager not found in scene!");
-        }
-
-        if (nextTileSpawnPos == null)
-        {
-            Debug.LogWarning($"{gameObject.name}: nextTileSpawnPos is not assigned!");
-        }
-
         hasTriggeredSpawn = false;
     }
 
@@ -72,7 +74,43 @@ public class GroundTile : MonoBehaviour
 
     void DestroyTile()
     {
-        Destroy(gameObject, destroyDelay);
+        if (usePooling && PoolManager.Instance != null)
+        {
+            Invoke(nameof(ReturnToPool), destroyDelay);
+        }
+        else
+        {
+            Destroy(gameObject, destroyDelay);
+        }
+    }
+
+    void ReturnToPool()
+    {
+        string difficulty = DetermineDifficulty();
+        poolKey = $"{difficulty}_{GetPrefabName()}";
+
+        PoolManager.Instance.ReturnToPool(poolKey, gameObject);
+    }
+
+    string DetermineDifficulty()
+    {
+        if (name.Contains("Easy")) return "Easy";
+        if (name.Contains("Medium")) return "Medium";
+        if (name.Contains("Hard")) return "Hard";
+        return "Easy";
+    }
+
+    string GetPrefabName()
+    {
+        string fullName = gameObject.name;
+        int underscoreIndex = fullName.LastIndexOf('_');
+
+        if (underscoreIndex >= 0)
+        {
+            return fullName.Substring(0, underscoreIndex);
+        }
+
+        return fullName;
     }
 
     public void ResetTile()
