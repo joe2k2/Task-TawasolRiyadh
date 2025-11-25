@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -9,6 +10,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("Physics Settings")]
     [SerializeField] private float gravityMultiplier = 1f;
+
+    [SerializeField] private Button jumpButton;
 
     private Rigidbody rb;
     private PlayerInputActions inputActions;
@@ -27,7 +30,10 @@ public class PlayerController : MonoBehaviour
         InitializeRigidbody();
         InitializeInput();
     }
-
+    private void Start()
+    {
+        jumpButton.onClick.AddListener(OnJumpButtonPressed);
+    }
     void FixedUpdate()
     {
         BroadcastState();
@@ -72,6 +78,16 @@ public class PlayerController : MonoBehaviour
     {
         inputActions = new PlayerInputActions();
         inputActions.Player.Jump.performed += OnJumpPerformed;
+    }
+    void OnJumpButtonPressed()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+            return;
+
+        if (isGrounded && canJump)
+        {
+            Jump();
+        }
     }
 
     void OnJumpPerformed(InputAction.CallbackContext context)
@@ -129,12 +145,18 @@ public class PlayerController : MonoBehaviour
 
     void OnDestroy()
     {
+        if (jumpButton != null)
+        {
+            jumpButton.onClick.RemoveListener(OnJumpButtonPressed);
+        }
+
         if (inputActions != null)
         {
             inputActions.Player.Jump.performed -= OnJumpPerformed;
             inputActions.Dispose();
         }
     }
+
 
     void OnDrawGizmos()
     {
