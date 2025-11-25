@@ -367,12 +367,6 @@ The Gameplay scene implements the classic endless runner architecture where:
 - Script: `PlayerController.cs`
 - Architecture: Classic endless runner
 
-**Gameplay 1 Scene (Alternative):**
-- Uses `TileSpawner` and `Ground`
-- Player moves forward, tiles static
-- Script: `Player.cs`
-- Architecture: Modern runner
-
 ---
 
 ## 🔗 Related Assets
