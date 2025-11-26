@@ -13,7 +13,7 @@ The Gameplay scene implements the classic endless runner architecture where:
 - Tiles move backward toward the player
 - Player jumps to avoid obstacles and collect items
 - Speed increases progressively over time
-- Ghost player shows previous best run
+- Ghost player shows previous frame run
 
 ---
 
@@ -46,7 +46,7 @@ The Gameplay scene implements the classic endless runner architecture where:
 **Script:** `/Assets/Scripts/Player/PlayerController.cs`
 
 **Components:**
-- `PlayerController` - Jump logic and input
+- `PlayerController` - Jump logic
 - `Rigidbody` - Physics simulation
 - `BoxCollider` - Collision detection
 - `MeshRenderer` - Visual representation
@@ -59,7 +59,7 @@ The Gameplay scene implements the classic endless runner architecture where:
 
 **Controls:**
 - **PC:** Space bar to jump
-- **Mobile:** Tap Jump Button
+- **Mobile:** Tap on screen
 
 **Inspector Settings:**
 - **Jump Force:** `7` (adjustable for jump height)
@@ -234,7 +234,7 @@ The Gameplay scene implements the classic endless runner architecture where:
 - Higher resolution graphics
 
 ### **Android Build:**
-- Touch input via Jump button
+- Touch input via screen
 - Optimized performance settings
 - Mobile-appropriate UI scaling
 - Device safe area support
