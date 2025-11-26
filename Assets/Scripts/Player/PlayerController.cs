@@ -11,8 +11,6 @@ public class PlayerController : MonoBehaviour
     [Header("Physics Settings")]
     [SerializeField] private float gravityMultiplier = 1f;
 
-    [SerializeField] private Button jumpButton;
-
     private Rigidbody rb;
     private PlayerInputActions inputActions;
     private bool isGrounded;
@@ -30,11 +28,7 @@ public class PlayerController : MonoBehaviour
         InitializeRigidbody();
         InitializeInput();
     }
-    private void Start()
-    {
-        jumpButton.onClick.AddListener(OnJumpButtonPressed);
-    }
-    void FixedUpdate()
+    void Update()
     {
         BroadcastState();
     }
@@ -145,18 +139,9 @@ public class PlayerController : MonoBehaviour
 
     void OnDestroy()
     {
-        if (jumpButton != null)
-        {
-            jumpButton.onClick.RemoveListener(OnJumpButtonPressed);
-        }
-
-        if (inputActions != null)
-        {
-            inputActions.Player.Jump.performed -= OnJumpPerformed;
-            inputActions.Dispose();
-        }
+        inputActions.Player.Jump.performed -= OnJumpPerformed;
+        inputActions.Dispose();
     }
-
 
     void OnDrawGizmos()
     {

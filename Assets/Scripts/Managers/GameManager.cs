@@ -23,6 +23,11 @@ public class GameManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        #if UNITY_ANDROID || UNITY_IOS
+            Application.targetFrameRate = 60;
+            QualitySettings.vSyncCount = 0;
+        #endif
+
     }
 
     void Start()
